@@ -24,6 +24,7 @@ class MainWindow(QMainWindow):
 
         # 이미지 시각화
         self.img_container = QWidget()                      
+        self.img_container.setLayout(QVBoxLayout())
         self.main_layout.addWidget(self.img_container)
         self.set_img_widget()
 
@@ -35,7 +36,7 @@ class MainWindow(QMainWindow):
     
     def set_sidebar_widget(self):                       
         sidebar = QListWidget()
-        sidebar.addItems(find_common_images(IMG_PATH))
+        sidebar.addItems(find_common_files(IMG_PATH))
         sidebar.itemClicked.connect(self._on_sidebar_clicked)  
         return sidebar
 
@@ -56,7 +57,7 @@ class MainWindow(QMainWindow):
                 widget.deleteLater()
 
         # 공통 이미지 목록과 대상 파일명 선택
-        common_images = find_common_images(IMG_PATH)
+        common_images = find_common_files(IMG_PATH)
         img_fname = selected_name if selected_name else common_images[0]
 
         # 수평 레이아웃 생성
@@ -99,24 +100,25 @@ IMG_PATH = file['path']
 from glob import glob
 import os
 
-def find_common_images(paths):
-    common_names= None
+from glob import glob
+import os
+
+def find_common_files(paths):
+    common_basenames = None
 
     for directory in paths.values():
-        jpg_files = glob(os.path.join(directory, "*.jpg"))
-        jpg_names = {os.path.basename(f).lower() for f in jpg_files}
+        files = glob(os.path.join(directory, "*.jpg"))  # 기준은 여전히 .jpg
+        basenames = {os.path.splitext(os.path.basename(f).lower())[0] for f in files}
 
-        # print(f"[jpg_names] {jpg_names} {type(jpg_names)}")
+        if not basenames:
+            return []
 
-        if not jpg_names:
-            return f"{directory}에 jpg파일이 없음"
-
-        if common_names is None:
-            common_names = jpg_names
+        if common_basenames is None:
+            common_basenames = basenames
         else:
-            common_names &= jpg_names 
+            common_basenames &= basenames
 
-    return sorted(common_names) if common_names else []
+    return sorted(common_basenames) if common_basenames else []
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
