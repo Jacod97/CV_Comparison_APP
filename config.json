@@ -1,0 +1,7 @@
+{
+  "path": {
+    "원본": "./results/origin",
+    "정답": "./results/ground_true",
+    "예측": "./results/predict"
+  }
+}
