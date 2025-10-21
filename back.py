@@ -2,12 +2,10 @@ import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, 
     QWidget, QLabel, QHBoxLayout, QListWidget,
-    QMessageBox, QTableWidget, QTableWidgetItem,
-    QGroupBox
+    QMessageBox
 )
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, pyqtSignal, QRect
-from PyQt5.QtWidgets import QHeaderView, QAbstractItemView
 
 # print(find_common_images(IMG_PATH))
 
@@ -28,7 +26,6 @@ class MainWindow(QMainWindow):
             bbox = box_info(label_data, pred_data)
             self.data_dict[file] = bbox
             self.viewer_bboxes[file] = to_viewer_bboxes(bbox)
-
         # ui호출
         self.initUI()
 
@@ -50,9 +47,6 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.img_container)
         self.set_img_widget()
 
-        if self.files and hasattr(self, "sidebar_list"):
-            self.sidebar_list.setCurrentRow(0)
-
     # 메뉴바 필요하면 주석풀고 만들기
     # def _create_menubar(self,menu_name) -> None:
     #     menubar = self.menuBar()
@@ -60,19 +54,10 @@ class MainWindow(QMainWindow):
     #     menubar.addMenu(menu_name)
     
     def set_sidebar_widget(self):                       
-        container = QWidget()
-        layout = QVBoxLayout(container)
-
-        self.sidebar_list = QListWidget()
-        self.sidebar_list.addItems(self.files)
-        self.sidebar_list.itemClicked.connect(self._on_sidebar_clicked)
-        layout.addWidget(self.sidebar_list)
-
-        score_group = self._create_score_group()
-        layout.addWidget(score_group)
-        layout.addStretch()
-
-        return container
+        sidebar = QListWidget()
+        sidebar.addItems(find_common_files(IMG_PATH))
+        sidebar.itemClicked.connect(self._on_sidebar_clicked)  
+        return sidebar
 
     def _on_sidebar_clicked(self, item):                    
         filename = item.text()
@@ -95,19 +80,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(hbox)
 
         # 이미지 3개 표시
-        if not self.files:
-            notice = QLabel("표시할 공통 이미지가 없습니다.")
-            notice.setAlignment(Qt.AlignCenter)
-            layout.addWidget(notice)
-            return
-
         fname = selected_name or self.files[0]
-
-        if hasattr(self, "sidebar_list"):
-            matches = self.sidebar_list.findItems(fname, Qt.MatchExactly)
-            if matches:
-                self.sidebar_list.setCurrentItem(matches[0])
-
         for key, path in IMG_PATH.items():
             img, caption = self.show_img(path, fname, key)
 
@@ -118,10 +91,6 @@ class MainWindow(QMainWindow):
             container = QWidget()
             container.setLayout(vbox)
             hbox.addWidget(container)
-
-        matrix = Confusion_matrix(self.data_dict, fname)
-        layout.addSpacing(12)
-        layout.addWidget(self._create_confusion_group(fname, matrix))
 
     def show_img(self, path, img_name, caption_text):
         img_path = os.path.join(path, f"{img_name}.jpg")
@@ -150,45 +119,9 @@ class MainWindow(QMainWindow):
         )
         QMessageBox.information(self, "Detection Info", msg)
 
-    def _create_confusion_group(self, fname, matrix):
-        items = [(label, matrix.get(label, 0)) for label in ("TP", "FP", "FN")]
-        title = f"{fname} Confusion Matrix"
-        return self._create_table_group(title, items)
-
-    def _create_score_group(self):
-        keys = ("Precision", "Recall", "F1-Score", "Accuracy")
-        overall_score = Score(self.data_dict)
-        items = [(key, overall_score.get(key, 0.0)) for key in keys]
-        return self._create_table_group("전체 Score", items)
-
-    def _create_table_group(self, title, items):
-        group = QGroupBox(title)
-        table = self._create_table_widget(items)
-        wrapper = QVBoxLayout()
-        wrapper.setContentsMargins(8, 12, 8, 8)
-        wrapper.addWidget(table)
-        group.setLayout(wrapper)
-        return group
-
-    def _create_table_widget(self, items):
-        row_count = len(items)
-        table = QTableWidget(row_count, 2)
-        table.setHorizontalHeaderLabels(["구분", "값"])
-        for row, (label, value) in enumerate(items):
-            display_value = f"{value:.4f}" if isinstance(value, float) else str(value)
-            table.setItem(row, 0, QTableWidgetItem(str(label)))
-            table.setItem(row, 1, QTableWidgetItem(display_value))
-        table.verticalHeader().setVisible(False)
-        table.horizontalHeader().setStretchLastSection(True)
-        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        table.setSelectionMode(QAbstractItemView.NoSelection)
-        table.setFocusPolicy(Qt.NoFocus)
-        table.setAlternatingRowColors(True)
-        table.setFixedHeight(table.horizontalHeader().height() + row_count * 28 + 4)
-        return table
     
 from PyQt5.QtGui import QPainter, QColor, QPen, QBrush
+from PyQt5.QtWidgets import QMessageBox
 
 class DetectionViewer(QLabel):
     doubleClicked = pyqtSignal(dict)  # 클릭된 bbox 정보를 보낼 시그널
@@ -389,12 +322,6 @@ def cal_iou(label, pred):
 
     return iou
 
-def compare_label(label, pred):
-    if label['label'] == pred['label']:
-        return False
-    else:
-        return True
-
 def box_info(label_data, pred_data):
     length = len(label_data["shapes"])
     bbox = {}
@@ -458,9 +385,7 @@ for file in find_common_files(IMG_PATH):
     data_dict[file] = bbox
 
 def Confusion_matrix(data_dict, fname):
-    img = data_dict.get(fname)
-    if img is None:
-        return {"TP": 0, "FP": 0, "FN": 0}
+    img = data_dict[fname]
     length = min(len(img['answer']), len(img['predict']))
     matrix = {
         "TP" : 0,
@@ -472,7 +397,7 @@ def Confusion_matrix(data_dict, fname):
         matrix['FN'] += len(img['answer']) - len(img['predict'])
 
     elif len(img['answer']) < len(img['predict']):
-        matrix['FP'] += len(img['predict']) - len(img['answer'])
+        matrix['FP'] += len(img['answer']) - len(img['predict'])
 
     for i in range(length):
         _,_,_,_,label = img['answer'][i]

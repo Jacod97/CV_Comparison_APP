@@ -53,7 +53,6 @@ def box_info(label_data, pred_data):
         pred = pred_data[i]
 
         flag = compare_label(label, pred)
-        print(flag)
 
         box_dict = cal_iou(label, pred)
         box_dict['label'] = label['label']
@@ -61,17 +60,44 @@ def box_info(label_data, pred_data):
             box_dict['IoU'] = 0.0
         bbox.append(box_dict)
 
-        print(box_dict['IoU'])
-
     return bbox
 
-label_path = "./results/answer/c1.json"
-pred_path = "./results/predict/c1.json"
+from glob import glob
+import os
+import json
+with open("config.json", "r", encoding="utf-8") as f:
+    file = json.load(f)
+IMG_PATH = file['path']
 
-with open(label_path, "r", encoding="utf-8") as f:
-    label_data = json.load(f)
-with open(pred_path, "r", encoding="utf-8") as f:
-    pred_data = json.load(f)
+def find_common_files(paths):
+    common_basenames = None
 
-bbox = box_info(label_data, pred_data)
-# print(bbox)
+    for directory in paths.values():
+        files = glob(os.path.join(directory, "*.jpg"))  # 기준은 여전히 .jpg
+        basenames = {os.path.splitext(os.path.basename(f).lower())[0] for f in files}
+
+        if not basenames:
+            return []
+
+        if common_basenames is None:
+            common_basenames = basenames
+        else:
+            common_basenames &= basenames
+
+    return sorted(common_basenames) if common_basenames else []
+
+# print(IMG_PATH)
+files = find_common_files(IMG_PATH)
+
+data_dict = {}
+for f in files:
+    label_path = os.path.join(IMG_PATH['answer'], f"{f}.json")
+    pred_path = os.path.join(IMG_PATH['predict'], f"{f}.json")
+    with open(label_path, "r", encoding="utf-8") as f:
+        label_data = json.load(f)
+    with open(pred_path, "r", encoding="utf-8") as f:
+        pred_data = json.load(f)
+    # print(type(label_data))
+    bbox = box_info(label_data, pred_data)
+    data_dict[f] = bbox
+print(data_dict)

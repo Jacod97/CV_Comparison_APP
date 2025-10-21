@@ -1,7 +1,7 @@
 {
   "path": {
-    "원본": "./results/origin",
-    "정답": "./results/answer",
-    "예측": "./results/predict"
+    "origin": "./results/origin",
+    "answer": "./results/answer",
+    "predict": "./results/predict"
   }
 }
