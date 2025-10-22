@@ -1,0 +1,13 @@
+[
+  {
+    "class_id": 2,
+    "label": "hbeam",
+    "confidence": 0.940405011177063,
+    "bbox": {
+      "x": 187,
+      "y": -21,
+      "width": 107,
+      "height": 375
+    }
+  }
+]

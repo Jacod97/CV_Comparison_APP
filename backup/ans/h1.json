@@ -1,0 +1,28 @@
+{
+  "version": "0.4.30",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "hbeam",
+      "text": "",
+      "points": [
+        [
+          187.0,
+          -21.0
+        ],
+        [
+          291.48936170212767,
+          394.04255319148933
+        ]
+      ],
+      "group_id": null,
+      "shape_type": "rectangle",
+      "flags": {}
+    }
+  ],
+  "imagePath": "h_28.jpg",
+  "imageData": null,
+  "imageHeight": 400,
+  "imageWidth": 400,
+  "text": ""
+}

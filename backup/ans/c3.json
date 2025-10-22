@@ -1,0 +1,44 @@
+{
+  "version": "0.4.30",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "rebar",
+      "text": "",
+      "points": [
+        [
+          253.5,
+          9.030303030303084
+        ],
+        [
+          489.8636363636365,
+          522.6666666666667
+        ]
+      ],
+      "group_id": null,
+      "shape_type": "rectangle",
+      "flags": {}
+    },
+    {
+      "label": "concrete",
+      "text": "",
+      "points": [
+        [
+          226.22727272727298,
+          516.6060606060606
+        ],
+        [
+          514.1060606060605,
+          1392.3636363636363
+        ]
+      ],
+      "group_id": null,
+      "shape_type": "rectangle",
+      "flags": {}
+    }
+  ],
+  "imagePath": "c_29.jpg",
+  "imageData": null,
+  "imageHeight": 1412,
+  "imageWidth": 607
+}

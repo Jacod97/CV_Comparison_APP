@@ -109,8 +109,8 @@ def Score(img_infos):
 result_dir = "../data/test/test_excute/result"
 # pred_dir = "../data/test/0923_test/hbeam/inference/all"
 # label_dir = "../data/test/0923_test/hbeam/json_img"
-pred_dir = "../data/test/test_excute/result/all"
-label_dir = "../data/test/test_excute"
+pred_dir = "results/predict"
+label_dir = "results/answer"
 pred_paths = glob(os.path.join(pred_dir, "*.json"))
 label_paths = glob(os.path.join(label_dir, "*.json"))
 

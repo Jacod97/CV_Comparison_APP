@@ -1,0 +1,28 @@
+{
+  "version": "0.4.30",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "concrete",
+      "text": "",
+      "points": [
+        [
+          228.47619047619037,
+          -0.5873015873016811
+        ],
+        [
+          365.07936507936506,
+          556.5555555555555
+        ]
+      ],
+      "group_id": null,
+      "shape_type": "rectangle",
+      "flags": {}
+    }
+  ],
+  "imagePath": "c1.jpg",
+  "imageData": null,
+  "imageHeight": 600,
+  "imageWidth": 600,
+  "text": ""
+}

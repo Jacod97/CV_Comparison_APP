@@ -1,0 +1,13 @@
+[
+  {
+    "class_id": 1,
+    "label": "concrete",
+    "confidence": 0.996905505657196,
+    "bbox": {
+      "x": 238,
+      "y": 1,
+      "width": 126,
+      "height": 534
+    }
+  }
+]
