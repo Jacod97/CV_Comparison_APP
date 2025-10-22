@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QHBoxLayout, QVBoxLayout,
-    QListWidget, QTableWidget, QHeaderView, QSplitter
+    QListWidget, QTableWidget, QHeaderView, QSplitter,QTableWidgetItem
 )
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
@@ -10,7 +10,7 @@ from back import ImageData
 class ImageViewer(QWidget):
     def __init__(self, side_bar, data_dict, score):
         super().__init__()
-        self.setWindowTitle("3-Image Viewer with Sidebar and Table")
+        self.setWindowTitle("CV Result Application")
         self.setGeometry(200, 200, 2500, 900)
         self.side_bar = side_bar
         self.data_dict = data_dict
@@ -27,6 +27,7 @@ class ImageViewer(QWidget):
         splitter.addWidget(self.sidebar)
 
         self.sidebar.addItems(self.side_bar)
+        self.sidebar.itemDoubleClicked.connect(self.load_selected_images)
 
         # ===== 메인 위젯 =====
         main_widget = QWidget()
@@ -56,13 +57,40 @@ class ImageViewer(QWidget):
         self.table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)    # 행 높이 자동 채움
 
         # ===== 이미지 경로 직접 입력 =====
-        # ↓↓↓ 여기에 직접 이미지 경로 입력 ↓↓↓
+        if self.sidebar.count() > 0:
+            fname = self.sidebar.item(0).text()
+            self.image_paths = [
+                f"results/origin/{fname}.jpg",
+                f"results/answer/{fname}.jpg",
+                f"results/predict/{fname}.jpg"
+            ]
+            self.show_images(self.image_paths)
+            self.load_selected_images(self.sidebar.item(0)) 
+
+    def load_selected_images(self, item):
+        """사이드바 더블클릭 시 이미지 및 통계 갱신"""
+        fname = item.text()
+
+        # ===== 이미지 변경 =====
         self.image_paths = [
-            r"results/origin/concrete_lv1_1.jpg",
-            r"results/answer/concrete_lv1_1.jpg",
-            r"results/predict/concrete_lv1_1.jpg"
+            f"results/origin/{fname}.jpg",
+            f"results/answer/{fname}.jpg",
+            f"results/predict/{fname}.jpg"
         ]
         self.show_images(self.image_paths)
+
+        # ===== 표 갱신 =====
+        if fname in self.data_dict:
+            info = self.data_dict[fname]
+            tp, fp, fn = info["TP"], info["FP"], info["FN"]
+
+            for row, (label, value) in enumerate([("TP", tp), ("FP", fp), ("FN", fn)]):
+                item_label = QTableWidgetItem(label)
+                item_label.setTextAlignment(Qt.AlignCenter)
+                item_value = QTableWidgetItem(str(value))
+                item_value.setTextAlignment(Qt.AlignCenter)
+                self.table.setItem(row, 0, item_label)
+                self.table.setItem(row, 1, item_value)
 
     def show_images(self, paths):
         for lbl, path in zip(self.labels, paths):

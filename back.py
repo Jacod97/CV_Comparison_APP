@@ -30,12 +30,20 @@ class ImageData:
         return sorted(common_basenames) if common_basenames else []
 
     def box_info(self, label_data, pred_data):
-        bbox = {'answer': [], 'predict': [], 'IoU': []}
+        bbox = {
+            'answer': [],
+            'predict': [],
+            'IoU': [],
+            'TP': 0,
+            'FP': 0,
+            'FN': 0
+        }
         matched = set()
 
         for label in label_data["shapes"]:
             (Lx1, Ly1), (Lx2, Ly2) = label["points"]
-            bbox['answer'].append((Lx1, Ly1, Lx2, Ly2, label['label']))
+            label_cls = label["label"]
+            bbox['answer'].append((Lx1, Ly1, Lx2, Ly2, label_cls))
 
             best_iou = 0
             best_idx = -1
@@ -51,13 +59,24 @@ class ImageData:
                 matched.add(best_idx)
                 pred = pred_data[best_idx]
                 Px1, Py1, Px2, Py2 = pred['box']
-                bbox['predict'].append((Px1, Py1, Px2, Py2, pred['cls']))
+                pred_cls = pred['cls']
+                bbox['predict'].append((Px1, Py1, Px2, Py2, pred_cls))
                 bbox['IoU'].append(best_iou)
+
+                # === TP/FP 판단 ===
+                if label_cls == pred_cls:
+                    if best_iou >= 0.5:
+                        bbox['TP'] += 1
+                    else:
+                        bbox['FP'] += 1
+                else:
+                    bbox['FP'] += 1
             else:
                 bbox['predict'].append((0, 0, 0, 0, None))
                 bbox['IoU'].append(0.0)
-        
-        # pred가 더 많을 경우 남은 예측만 추가
+                bbox['FN'] += 1
+
+        # === pred가 더 많을 경우 남은 예측은 FP 처리 ===
         if len(pred_data) > len(label_data["shapes"]):
             for i, pred in enumerate(pred_data):
                 if i not in matched:
@@ -65,42 +84,16 @@ class ImageData:
                     bbox['answer'].append((0, 0, 0, 0, None))
                     bbox['predict'].append((Px1, Py1, Px2, Py2, pred['cls']))
                     bbox['IoU'].append(0.0)
+                    bbox['FP'] += 1
+
         return bbox
-    def Confusion_matrix(self,img_info):
-        length = len(img_info['answer'])
-        matrix = {
-            "TP" : 0,
-            "FP" : 0,
-            "FN" : 0
-        }
-
-        for i in range(length):
-            _,_,_,_,label = img_info['answer'][i]
-            _,_,_,_,pred = img_info['predict'][i]
-            
-            if pred is None:
-                matrix["FN"] += 1
-                continue
-
-            if label == pred:
-                if img_info['IoU'][i] >= 0.5:
-                    matrix["TP"] += 1
-                else:
-                    matrix['FP'] += 1
-            else:
-                matrix['FP'] += 1
         
-        return matrix
-
     def Score(self):
-        TP = 0
-        FP = 0
-        FN = 0
-        for key,val in self.img_info.items():
-            matrix = self.Confusion_matrix(val)
-            TP += matrix["TP"]
-            FP += matrix["FP"]
-            FN += matrix["FN"]
+        TP = FP = FN = 0
+        for val in self.img_info.values():
+            TP += val["TP"]
+            FP += val["FP"]
+            FN += val["FN"]
 
         precision = TP / (TP + FP) if (TP + FP) > 0 else 0.0
         recall = TP / (TP + FN) if (TP + FN) > 0 else 0.0
@@ -108,13 +101,13 @@ class ImageData:
         accuracy = TP / (TP + FP + FN) if (TP + FP + FN) > 0 else 0.0
 
         return {
-            "TP" : TP, "FP" : FP, "FN" : FN,
+            "TP": TP, "FP": FP, "FN": FN,
             "Precision": round(precision, 4),
             "Recall": round(recall, 4),
             "F1-Score": round(f1, 4),
             "Accuracy": round(accuracy, 4)
         }
-    
+
     def run(self):
         for fname in self.side_bar_list:
             pred_path = os.path.join(self.paths['predict'], f"{fname}.json")
@@ -146,3 +139,6 @@ def cal_iou(Lx1, Ly1, Lx2, Ly2, Px1, Py1, Px2, Py2):
     union_area = area_a + area_p - inter_area
     iou = inter_area / union_area if union_area > 0 else 0
     return round(iou,4)
+
+# data = ImageData("config.json")
+# print(data.score)
